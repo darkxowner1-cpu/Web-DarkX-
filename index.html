@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nijengee - Pasha Picha Pata Link</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+        
+        .upload-area i {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+            display: block;
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .link-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .link-container h3 {
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+        
+        .link-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        #shareLink {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .preview {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        #imagePreview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .filename {
+            margin: 10px 0;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📷 Nijengee</h1>
+            <p>Pakia picha yako upate link ya kushare mara moja!</p>
+        </div>
+        
+        <div class="upload-area" id="uploadArea">
+            <div>📁</div>
+            <h3>Weka Picha Yako Hapa</h3>
+            <p>Bonyeza au vuta picha upakiaji</p>
+            <p><small>Inasaidia: JPG, PNG, GIF (mpaka 5MB)</small></p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        
+        <div class="filename" id="fileName"></div>
+        
+        <div class="preview">
+            <img id="imagePreview" alt="Preview">
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Inapakia picha...</p>
+        </div>
+        
+        <button class="btn" id="uploadBtn" onclick="uploadImage()" disabled>Pakia Picha</button>
+        
+        <div class="link-container" id="linkContainer">
+            <h3>✅ Imefanikiwa!</h3>
+            <p>Hii ndio link ya kushare picha yako:</p>
+            <div class="link-input">
+                <input type="text" id="shareLink" readonly>
+                <button class="copy-btn" onclick="copyLink()">Nakili</button>
+            </div>
+            <button class="btn" onclick="shareLink()">Shiriki Link</button>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const imagePreview = document.getElementById('imagePreview');
+        const fileName = document.getElementById('fileName');
+        const loading = document.getElementById('loading');
+        const linkContainer = document.getElementById('linkContainer');
+
+        // Event Listeners
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect();
+            }
+        });
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Tafuta chagua picha tu (JPG, PNG, GIF)');
+                resetForm();
+                return;
+            }
+
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Picha ni kubwa sana! Tafuta chagua picha ndogo (chini ya 5MB)');
+                resetForm();
+                return;
+            }
+
+            // Show file name
+            fileName.textContent = `File: ${file.name}`;
+            uploadBtn.disabled = false;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+
+        async function uploadImage() {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Tafuta chagua picha kwanza!');
+                return;
+            }
+
+            loading.style.display = 'block';
+            uploadBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                loading.style.display = 'none';
+                
+                if (result.success) {
+                    document.getElementById('shareLink').value = result.link;
+                    linkContainer.style.display = 'block';
+                    uploadArea.style.display = 'none';
+                } else {
+                    alert('Hitilafu: ' + result.message);
+                    uploadBtn.disabled = false;
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                alert('Hitilafu ya mtandao: ' + error.message);
+                uploadBtn.disabled = false;
+            }
+        }
+
+        function copyLink() {
+            const linkInput = document.getElementById('shareLink');
+            linkInput.select();
+            navigator.clipboard.writeText(linkInput.value)
+                .then(() => {
+                    alert('✅ Link imenakiliwa kikamilifu!');
+                })
+                .catch(err => {
+                    console.error('Copy failed:', err);
+                    alert('Hitilafu ya kunakili link');
+                });
+        }
+
+        function shareLink() {
+            const link = document.getElementById('shareLink').value;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Angalia picha yangu!',
+                    text: 'Angalia picha niliyopakia',
+                    url: link
+                });
+            } else {
+                copyLink();
+            }
+        }
+
+        function resetForm() {
+            fileInput.value = '';
+            uploadBtn.disabled = true;
+            imagePreview.style.display = 'none';
+            fileName.textContent = '';
+        }
+    </script>
+</body>
+</html>
